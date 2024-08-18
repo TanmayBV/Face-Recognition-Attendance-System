@@ -1,9 +1,43 @@
-import face_recognition_api
-import cv2
 import os
 import pickle
 import numpy as np
+import cv2
+import face_recognition_api  # Assuming this is your custom module
+import pandas as pd
+from datetime import datetime, timedelta
 import warnings
+
+# Path to the Excel file
+excel_file_path = 'attendance.xlsx'
+
+# Initialize attendance DataFrame
+if os.path.isfile(excel_file_path):
+    # Load existing data if file exists
+    df = pd.read_excel(excel_file_path)
+else:
+    # Create a new DataFrame if file does not exist
+    df = pd.DataFrame(columns=['Name', 'Timestamp'])
+
+# Dictionary to track the last time attendance was recorded for each person
+last_attendance_time = {}
+
+def save_attendance(name):
+    global df
+    current_time = datetime.now()
+
+    # Check if the person has been recorded in the last hour
+    if name in last_attendance_time:
+        last_time = last_attendance_time[name]
+        if current_time - last_time < timedelta(hours=1):
+            print(f"Attendance already recorded for {name} within the last hour. Skipping.")
+            return
+    
+    # Record the attendance
+    new_entry = pd.DataFrame({'Name': [name], 'Timestamp': [current_time]})
+    df = pd.concat([df, new_entry], ignore_index=True)
+    df.to_excel(excel_file_path, index=False)
+    last_attendance_time[name] = current_time
+    print(f"Attendance recorded for {name}")
 
 # Get a reference to webcam #0 (the default one)
 video_capture = cv2.VideoCapture(0)
@@ -12,13 +46,9 @@ video_capture = cv2.VideoCapture(0)
 fname = 'classifier.pkl'
 if os.path.isfile(fname):
     with open(fname, 'rb') as f:
-        try:
-            le, clf = pickle.load(f)
-        except Exception as e:
-            print("Error loading pickle file:", e)
-            quit()
+        (le, clf) = pickle.load(f)
 else:
-    print('\x1b[0;37;43m' + f"Classifier '{fname}' does not exist" + '\x1b[0m')
+    print('\x1b[0;37;43m' + "Classifier '{}' does not exist".format(fname) + '\x1b[0m')
     quit()
 
 # Initialize some variables
@@ -35,10 +65,6 @@ with warnings.catch_warnings():
     while True:
         # Grab a single frame of video
         ret, frame = video_capture.read()
-
-        if not ret:
-            print("Failed to grab frame. Exiting.")
-            break
 
         # Resize frame of video to 1/4 size for faster face recognition processing
         small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
@@ -61,6 +87,11 @@ with warnings.catch_warnings():
 
                 predictions = [(le.inverse_transform([int(pred)])[0].title(), loc) if rec else ("Unknown", loc) 
                                for pred, loc, rec in zip(clf.predict(face_encodings), face_locations, is_recognized)]
+
+                # Save attendance if recognized
+                for name, _ in predictions:
+                    if name != "Unknown":
+                        save_attendance(name)
 
         process_this_frame = not process_this_frame
 
