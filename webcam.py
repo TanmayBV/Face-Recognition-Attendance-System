@@ -10,9 +10,14 @@ import numpy as np
 fname = 'classifier.pkl'
 if os.path.isfile(fname):
     with open(fname, 'rb') as f:
-        le, clf = pickle.load(f)
+        data = pickle.load(f)
+        if isinstance(data, tuple) and len(data) == 2:
+            le, clf = data  # Label encoder and classifier
+        else:
+            print("Unexpected classifier data format.")
+            quit()
 else:
-    print("Classifier does not exist")
+    print("Classifier file does not exist.")
     quit()
 
 # Function to connect to the database
@@ -47,10 +52,8 @@ def save_attendance(employee_id, employee_name):
     result = cursor.fetchone()
 
     if result:
-        # Employee exists, check if the current date is already recorded
-        attendance_dates = result[0].split(',')  # Split the attendance dates stored as a comma-separated string
+        attendance_dates = result[0].split(',')
         if current_date not in attendance_dates:
-            # Add the current date to the list if not already recorded
             attendance_dates.append(current_date)
             attendance_dates_str = ','.join(attendance_dates)
             cursor.execute("UPDATE employee_attendance SET attendance_date = %s WHERE employee_id = %s", 
@@ -59,7 +62,6 @@ def save_attendance(employee_id, employee_name):
         else:
             print(f"Attendance already recorded for {employee_name} today.")
     else:
-        # New employee, insert into the table with today's date
         cursor.execute("INSERT INTO employee_attendance (employee_id, name, attendance_date) VALUES (%s, %s, %s)",
                        (employee_id, employee_name, current_date))
         print(f"Attendance recorded for {employee_name}.")
@@ -86,15 +88,20 @@ while True:
     if len(face_encodings) > 0:
         # Use KNN classifier to predict the label (ID) for the face
         closest_distances = clf.kneighbors(face_encodings, n_neighbors=1)
+
         is_recognized = [closest_distances[0][i][0] <= 0.5 for i in range(len(face_locations))]
 
-        for pred, loc, rec in zip(clf.predict(face_encodings), face_locations, is_recognized):
+        for pred, loc, rec, dist in zip(clf.predict(face_encodings), face_locations, is_recognized, closest_distances[0]):
             name = le.inverse_transform([int(pred)])[0] if rec else "Unknown"
+            face_names.append(name)
+            
             if name != "Unknown":
                 # Fetch employee data and save attendance
                 employee_data = fetch_employee_data()
+                
+                # Match the predicted ID with employee data
                 for emp_id, emp_name in employee_data:
-                    if str(emp_id) == name:
+                    if str(emp_name) == str(name):  # Compare with the predicted name (as string)
                         save_attendance(emp_id, emp_name)
 
     # Display the results
@@ -104,8 +111,11 @@ while True:
         bottom *= 4
         left *= 4
 
+        # Draw a rectangle around the face
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-        cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 1)
+        
+        # Display name or "Unknown" below the rectangle
+        cv2.putText(frame, str(name), (left + 6, bottom + 25), cv2.FONT_HERSHEY_DUPLEX, 1.0, (255, 255, 255), 1)
 
     # Display the resulting image
     cv2.imshow('Video', frame)
