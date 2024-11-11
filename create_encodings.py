@@ -1,76 +1,79 @@
-import imageio
-import os
+import mysql.connector
+import numpy as np
+import pickle
 import face_recognition_api
 from sklearn.preprocessing import LabelEncoder
-import pickle
-import numpy as np
-import pandas as pd
+import io
+from PIL import Image
 
-def _get_training_dirs(training_dir_path):
-    return [x[0] for x in os.walk(training_dir_path)][1:]
+# Connect to MySQL database
+def connect_db():
+    return mysql.connector.connect(
+        host="sql12.freesqldatabase.com",
+        user="sql12743844",
+        password="ZDezf3Y1Xn",
+        database="sql12743844"
+    )
 
-def _get_training_labels(training_dir_path):
-    return [x[1] for x in os.walk(training_dir_path)][0]
+# Fetch images and photo IDs from the 'photos' table
+def fetch_images_from_db():
+    db = connect_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT photo_id, photo FROM photos")
+    records = cursor.fetchall()
+    cursor.close()
+    db.close()
+    return records
 
-def _get_each_labels_files(training_dir_path):
-    return [x[2] for x in os.walk(training_dir_path)][1:]
+# Encode images and store encodings back in MySQL
+def create_and_save_encodings():
+    db = connect_db()
+    cursor = db.cursor()
 
-def _filter_image_files(training_dir_path):
-    exts = [".jpg", ".jpeg", ".png"]
-    training_folder_files_list = []
-    for list_files in _get_each_labels_files(training_dir_path):
-        l = []
-        for file in list_files:
-            imageName, ext = os.path.splitext(file)
-            if ext.lower() in exts:
-                l.append(file)
-        training_folder_files_list.append(l)
-    return training_folder_files_list
+    records = fetch_images_from_db()
+    encodings = []
+    labels = []
 
-def _zipped_folders_labels_images(training_dir_path, labels):
-    return list(zip(_get_training_dirs(training_dir_path),
-                    labels,
-                    _filter_image_files(training_dir_path)))
+    for record in records:
+        photo_id, image_data = record
+        
+        # Convert BLOB data to an image array
+        image = Image.open(io.BytesIO(image_data))
+        img = np.array(image)
+        
+        # Generate face encodings
+        face_encodings = face_recognition_api.face_encodings(img)
 
-def create_dataset(training_dir_path, labels):
-    X = []
-    for i in _zipped_folders_labels_images(training_dir_path, labels):
-        for fileName in i[2]:
-            file_path = os.path.join(i[0], fileName)
-            img = face_recognition_api.load_image_file(file_path)
-            imgEncoding = face_recognition_api.face_encodings(img)
+        if len(face_encodings) > 1:
+            print(f'More than one face found for photo ID {photo_id}. Only considering the first face.')
+        elif len(face_encodings) == 0:
+            print(f'No face found for photo ID {photo_id}. Skipping.')
+            continue
 
-            if len(imgEncoding) > 1:
-                print('\x1b[0;37;43m' + 'More than one face found in {}. Only considering the first face.'.format(file_path) + '\x1b[0m')
-            if len(imgEncoding) == 0:
-                print('\x1b[0;37;41m' + 'No face found in {}. Ignoring file.'.format(file_path) + '\x1b[0m')
-            else:
-                print('Encoded {} successfully.'.format(file_path))
-                X.append(np.append(imgEncoding[0], i[1]))
-    return X
+        encoding = face_encodings[0]
+        encodings.append(encoding)
+        labels.append(photo_id)
 
-encoding_file_path = './encoded-images-data.csv'
-training_dir_path = './training-images'
-labels_fName = "labels.pkl"
+        # Convert encoding to a comma-separated string
+        encoding_str = ",".join([str(val) for val in encoding])
+        
+        # Save encoding to MySQL in the 'photos' table
+        cursor.execute(
+            "UPDATE photos SET encoding = %s WHERE photo_id = %s",
+            (encoding_str, photo_id)
+        )
+        print(f'Encoded and saved for photo ID {photo_id} successfully.')
 
-# Get the folder names in training-dir as labels
-# Encode them in numerical form for machine learning
-labels = _get_training_labels(training_dir_path)
-le = LabelEncoder().fit(labels)
-labelsNum = le.transform(labels)
-nClasses = len(le.classes_)
-dataset = create_dataset(training_dir_path, labelsNum)
-df = pd.DataFrame(dataset)
+    db.commit()
+    cursor.close()
+    db.close()
 
-# if file with same name already exists, backup the old file
-if os.path.isfile(encoding_file_path):
-    print("{} already exists. Backing up.".format(encoding_file_path))
-    os.rename(encoding_file_path, "{}.bak".format(encoding_file_path))
+    # Optionally save label encoding info to a file
+    le = LabelEncoder().fit(labels)
+    with open("labels.pkl", "wb") as f:
+        pickle.dump(le, f)
+    print("Labels saved to labels.pkl")
 
-df.to_csv(encoding_file_path)
-
-print("{} classes created.".format(nClasses))
-print('\x1b[6;30;42m' + "Saving labels pickle to '{}'".format(labels_fName) + '\x1b[0m')
-with open(labels_fName, 'wb') as f:
-    pickle.dump(le, f)
-print('\x1b[6;30;42m' + "Training Image's encodings saved in {}".format(encoding_file_path) + '\x1b[0m')
+# Main function
+if __name__ == "__main__":
+    create_and_save_encodings()
