@@ -7,10 +7,10 @@ from sklearn.preprocessing import LabelEncoder
 # Database connection details
 def connect_db():
     return mysql.connector.connect(
-        host="sql12.freesqldatabase.com",
-        user="sql12743844",
-        password="ZDezf3Y1Xn",
-        database="sql12743844"
+        host="localhost",
+        user="root",
+        password="",
+        database="face_attendance"
     )
 
 # Fetch encoded data and labels (names) from the server

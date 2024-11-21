@@ -22,57 +22,66 @@ else:
 
 # Function to connect to the database (but now we will use a persistent connection)
 def connect_db():
-    return mysql.connector.connect(
-        host="sql12.freesqldatabase.com",
-        user="sql12743844",
-        password="ZDezf3Y1Xn",
-        database="sql12743844"
-    )
+    try:
+        return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="face_attendance"
+        )
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        quit()
+
 
 # Fetch employee data from the database
 def fetch_employee_data(cursor):
-    cursor.execute("SELECT employee_id, name FROM employee_attendance")
-    return cursor.fetchall()
+    cursor.execute("SELECT employee_id, employee_name FROM employee_attendance")
+    data = cursor.fetchall()
+    return data
+
 
 # Updated save_attendance function to return attendance status
 def save_attendance(cursor, employee_id, employee_name):
-    # Get the current date
     current_date = datetime.now().strftime("%Y-%m-%d")
 
-    # Check if the employee already has an attendance record for today
-    cursor.execute("SELECT attendance_date FROM employee_attendance WHERE employee_id = %s", (employee_id,))
+    cursor.execute("SELECT attendance_dates FROM employee_attendance WHERE employee_id = %s", (employee_id,))
     result = cursor.fetchone()
 
     already_marked = False
     if result:
-        attendance_dates = result[0].split(',')
+        attendance_dates = result[0] if result[0] else ""
+        attendance_dates = attendance_dates.split(',')
         if current_date not in attendance_dates:
             attendance_dates.append(current_date)
-            attendance_dates_str = ','.join(attendance_dates)
-            cursor.execute("UPDATE employee_attendance SET attendance_date = %s WHERE employee_id = %s", 
-                           (attendance_dates_str, employee_id))
+            attendance_datess_str = ','.join(attendance_dates)
+            cursor.execute("UPDATE employee_attendance SET attendance_dates = %s WHERE employee_id = %s", 
+                           (attendance_datess_str, employee_id))
+            db.commit()  # Commit changes
             print(f"Attendance updated for {employee_name}")
         else:
             print(f"Attendance already recorded for {employee_name} today.")
             already_marked = True
     else:
-        cursor.execute("INSERT INTO employee_attendance (employee_id, name, attendance_date) VALUES (%s, %s, %s)",
+        cursor.execute("INSERT INTO employee_attendance (employee_id, name, attendance_dates) VALUES (%s, %s, %s)",
                        (employee_id, employee_name, current_date))
+        db.commit()  # Commit changes
         print(f"Attendance recorded for {employee_name}.")
 
     return already_marked
 
+
 # Initialize webcam for face recognition and set resolution
 video_capture = cv2.VideoCapture(0)
-video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
 # Initialize a persistent database connection and cursor
 db = connect_db()
 cursor = db.cursor()
 
 # Variables for frame processing
-frame_processing_interval = 5  # Process every 5th frame
+frame_processing_interval = 10  # Process every 5th frame
 frame_count = 0
 
 # Initialize empty lists for face locations, names, and colors
@@ -148,4 +157,3 @@ db.close()
 # Release the webcam and close the window
 video_capture.release()
 cv2.destroyAllWindows()
-db.close()

@@ -9,10 +9,10 @@ from PIL import Image
 # Connect to MySQL database
 def connect_db():
     return mysql.connector.connect(
-        host="sql12.freesqldatabase.com",
-        user="sql12743844",
-        password="ZDezf3Y1Xn",
-        database="sql12743844"
+        host="localhost",
+        user="root",
+        password="",
+        database="face_attendance"
     )
 
 # Fetch images and photo IDs from the 'photos' table
