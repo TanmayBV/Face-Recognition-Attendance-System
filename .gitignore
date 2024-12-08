@@ -15,3 +15,5 @@ dist/
 *.csv
 
 *.pkl
+build/GUI_Script/GUI_Script.pkg
+dist/GUI_Script.exe
