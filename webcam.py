@@ -4,6 +4,10 @@ import face_recognition_api
 import mysql.connector
 import cv2
 from datetime import datetime
+import face_recognition_api
+import mysql.connector
+import cv2
+from datetime import datetime
 import numpy as np
 
 # Function to load the classifier and label encoder
