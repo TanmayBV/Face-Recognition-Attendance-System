@@ -1,13 +1,26 @@
+import sys
 import imageio
 import dlib
 import numpy as np
 from PIL import Image
+import os
+
+# Function to handle paths correctly whether running from source or bundled with PyInstaller
+def get_model_path(model_filename):
+    if getattr(sys, 'frozen', False):  # Check if the application is frozen (running as .exe)
+        base_path = sys._MEIPASS  # Path where PyInstaller unpacks the app
+    else:
+        base_path = os.path.abspath('.')  # Current working directory (for scripts)
+
+    return os.path.join(base_path, 'models', model_filename)
 
 # Load the Dlib models
+# Load the Dlib models
+predictor_model = get_model_path('shape_predictor_68_face_landmarks.dat')
+face_recognition_model = get_model_path('dlib_face_recognition_resnet_model_v1.dat')
+
 face_detector = dlib.get_frontal_face_detector()
-predictor_model = './models/shape_predictor_68_face_landmarks.dat'
 pose_predictor = dlib.shape_predictor(predictor_model)
-face_recognition_model = './models/dlib_face_recognition_resnet_model_v1.dat'
 face_encoder = dlib.face_recognition_model_v1(face_recognition_model)
 
 def load_image_file(filename, mode='RGB'):
