@@ -1,0 +1,131 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+  }
+  
+  /* Variables */
+  :root {
+    --primary-color: #4070f4;
+    --bg-light: #f7f9fc;
+    --bg-dark: #1e1f29;
+    --text-color: #2c3e50;
+    --card-bg: #ffffff;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  [data-theme="dark"] {
+    --bg-light: #1e1f29;
+    --bg-dark: #121212;
+    --text-color: #ffffff;
+    --card-bg: #252627;
+  }
+  
+  /* Sidebar */
+  .sidebar {
+    background: var(--primary-color);
+    color: white;
+    padding: 20px;
+    height: 100vh;
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .logo-container i {
+    font-size: 2rem;
+    margin-right: 10px;
+  }
+  
+  .nav-links li {
+    list-style: none;
+    margin: 15px 0;
+  }
+  
+  .nav-links li a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-links li a i {
+    margin-right: 10px;
+  }
+  
+  .nav-links li.active a {
+    font-weight: 600;
+    text-decoration: underline;
+  }
+  
+  /* Main Content */
+  .main-content {
+    margin-left: 270px;
+    padding: 20px;
+  }
+  
+  .top-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  
+  .dashboard-stats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  
+  .stat-card {
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    width: 250px;
+    height: 300px;
+  }
+  
+  .circle-progress {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary-color) calc(var(--percentage) * 1%), #e3e3e3 0%);
+    margin: 0 auto;
+  }
+  
+  .circle-progress .percentage-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  /* Transition */
+  .circle-progress.animate-progress {
+    animation: progress 1.5s ease-out forwards;
+  }
+  
+  @keyframes progress {
+    0% {
+      --percentage: 0;
+    }
+  }
+  

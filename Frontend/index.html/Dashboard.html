@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Attendance Dashboard</title>
+  <link rel="stylesheet" href="Dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body data-theme="light">
+<div class="dashboard-container">
+<!-- Sidebar Navigation -->
+<nav class="sidebar">
+  <div class="logo-container">
+    <i class="fas fa-briefcase"></i>
+    <span class="logo-text">EmpTrack</span>
+  </div>
+
+  <ul class="nav-links">
+    <li class="active">
+      <a href="#">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <i class="fas fa-users"></i>
+        <span>Employees</span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <i class="fas fa-calendar-check"></i>
+        <span>Attendance</span>
+      </a>
+    </li>
+    <li>
+      <a href="#">
+        <i class="fas fa-chart-bar"></i>
+        <span>Reports</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+  <!-- Main Dashboard -->
+  <main class="main-content">
+    <div class="top-header">
+      <h1>Attendance Dashboard</h1>
+    </div>
+    <div class="dashboard-stats">
+      <!-- Weekly Attendance -->
+      <div class="stat-card">
+        <div class="circle-progress" data-percentage="75">
+          <span class="percentage-text">75%</span>
+        </div>
+        <h3>Weekly Attendance</h3>
+      </div>
+      <!-- Monthly Attendance -->
+      <div class="stat-card">
+        <div class="circle-progress" data-percentage="85">
+          <span class="percentage-text">85%</span>
+        </div>
+        <h3>Monthly Attendance</h3>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="Dashboard.js"></script>
+</body>
+</html>

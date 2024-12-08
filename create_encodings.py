@@ -1,10 +1,13 @@
 import mysql.connector
 import numpy as np
 import pickle
-import face_recognition_api
-from sklearn.preprocessing import LabelEncoder
+import sys
+import os
 import io
 from PIL import Image
+import face_recognition_api
+from sklearn.preprocessing import LabelEncoder
+
 
 # Connect to MySQL database
 def connect_db():
@@ -75,5 +78,6 @@ def create_and_save_encodings():
     print("Labels saved to labels.pkl")
 
 # Main function
-if __name__ == "__main__":
+def run():
     create_and_save_encodings()
+

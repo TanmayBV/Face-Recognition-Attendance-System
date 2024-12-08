@@ -68,7 +68,7 @@ def save_model_to_server():
     db.close()
 
 # Main function
-if __name__ == "__main__":
+def run():
     # Fetch encoded data from server
     X, y = fetch_encoded_data()
     
